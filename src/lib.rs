@@ -40,8 +40,8 @@ pub fn handler(_attr: TokenStream, item: TokenStream) -> TokenStream {
     quote! {
         #[::abi_stable::sabi_extern_fn]
         fn anyrun_internal_handle_selection(
-            selection: ::anyrun_plugin::anyrun_interface::Match,
-        ) -> ::anyrun_plugin::anyrun_interface::HandleResult {
+            selection: ::anyrun_interface::Match,
+        ) -> ::anyrun_interface::HandleResult {
             #function
 
             #fn_name(
@@ -127,7 +127,7 @@ pub fn info(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     quote! {
         #[::abi_stable::sabi_extern_fn]
-        fn anyrun_internal_info() -> ::anyrun_plugin::anyrun_interface::PluginInfo {
+        fn anyrun_internal_info() -> ::anyrun_interface::PluginInfo {
             #function
 
             #fn_name()
@@ -151,7 +151,7 @@ pub fn init(_attr: TokenStream, item: TokenStream) -> TokenStream {
         static ANYRUN_INTERNAL_THREAD: ::std::sync::Mutex<
             Option<(
                 ::std::thread::JoinHandle<
-                    ::abi_stable::std_types::RVec<::anyrun_plugin::anyrun_interface::Match>,
+                    ::abi_stable::std_types::RVec<::anyrun_interface::Match>,
                 >,
                 u64,
             )>,
@@ -162,9 +162,9 @@ pub fn init(_attr: TokenStream, item: TokenStream) -> TokenStream {
             ::std::sync::RwLock::new(None);
 
         #[::abi_stable::export_root_module]
-        fn anyrun_internal_init_root_module() -> ::anyrun_plugin::anyrun_interface::PluginRef {
+        fn anyrun_internal_init_root_module() -> ::anyrun_interface::PluginRef {
             use ::abi_stable::prefix_type::PrefixTypeTrait;
-            ::anyrun_plugin::anyrun_interface::Plugin {
+            ::anyrun_interface::Plugin {
                 init: anyrun_internal_init,
                 info: anyrun_internal_info,
                 get_matches: anyrun_internal_get_matches,
@@ -175,25 +175,25 @@ pub fn init(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         #[::abi_stable::sabi_extern_fn]
-        fn anyrun_internal_poll_matches(id: u64) -> ::anyrun_plugin::anyrun_interface::PollResult {
+        fn anyrun_internal_poll_matches(id: u64) -> ::anyrun_interface::PollResult {
             match ANYRUN_INTERNAL_THREAD.try_lock() {
                 Ok(thread) => match thread.as_ref() {
                     Some((thread, task_id)) => {
                         if *task_id == id {
                             if !thread.is_finished() {
-                                return ::anyrun_plugin::anyrun_interface::PollResult::Pending;
+                                return ::anyrun_interface::PollResult::Pending;
                             }
                         } else {
-                            return ::anyrun_plugin::anyrun_interface::PollResult::Cancelled;
+                            return ::anyrun_interface::PollResult::Cancelled;
                         }
                     }
-                    None => return ::anyrun_plugin::anyrun_interface::PollResult::Cancelled,
+                    None => return ::anyrun_interface::PollResult::Cancelled,
                 },
-                Err(_) => return ::anyrun_plugin::anyrun_interface::PollResult::Pending,
+                Err(_) => return ::anyrun_interface::PollResult::Pending,
             }
 
             let (thread, _) = ANYRUN_INTERNAL_THREAD.lock().unwrap().take().unwrap();
-            ::anyrun_plugin::anyrun_interface::PollResult::Ready(thread.join().unwrap())
+            ::anyrun_interface::PollResult::Ready(thread.join().unwrap())
         }
 
         #[::abi_stable::sabi_extern_fn]
